@@ -1,0 +1,17 @@
+{application, mtxer,
+ [{description, "Interact with Matrix homeservers"},
+  {vsn, "0.1.0"},
+  {registered, []},
+  {mod, {mtxer_app, []}},
+  {applications,
+   [kernel,
+    stdlib,
+    inets,
+    ssl
+   ]},
+  {env,[]},
+  {modules, []},
+
+  {licenses, ["BSD 3-clause"]},
+  {links, []}
+ ]}.
