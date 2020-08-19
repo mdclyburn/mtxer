@@ -33,8 +33,7 @@ init([Accounts]) ->
     {ok, #state{users = login(Users)}}.
 
 terminate(_Reason, State) ->
-    logout(State#state.users),
-    ok.
+    logout(State#state.users).
 
 handle_call(users, _From, State) ->
     {reply,
