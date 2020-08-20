@@ -2,22 +2,23 @@
 
 -include_lib("kernel/include/logger.hrl").
 
--export([register/1,
-         login/1,
+-export([register/2,
+         login/2,
          logout/1]).
 
 -type register_result() :: {ok, map()} | error.
 
--spec register(User) -> Result when
-      User :: mtxer_user:user(),
+-spec register(Username, Password) -> Result when
+      Username :: nonempty_string(),
+      Password :: nonempty_string(),
       Result :: register_result().
 
-register(User) ->
+register(Username, Password) ->
     Nonce = nonce(),
-    Mac = erlang:list_to_binary(string:to_lower(calculate_mac(User, Nonce))),
+    Mac = erlang:list_to_binary(string:to_lower(calculate_mac(Username, Password, Nonce))),
     Payload = #{nonce => Nonce,
-                username => unicode:characters_to_binary(mtxer_user:username(User)),
-                password => unicode:characters_to_binary(mtxer_user:password(User)),
+                username => unicode:characters_to_binary(Username),
+                password => unicode:characters_to_binary(Password),
                 mac => Mac},
     io:format("~s~n", [Mac]),
     mtxer_api_common:post(
@@ -25,29 +26,29 @@ register(User) ->
       [],
       Payload).
 
-login(User) ->
+login(Username, Password) ->
     Payload = #{type => <<"m.login.password">>,
                 identifier => #{type => <<"m.id.user">>,
-                                user => unicode:characters_to_binary(mtxer_user:username(User))},
-                password => unicode:characters_to_binary(mtxer_user:password(User)),
+                                user => unicode:characters_to_binary(Username)},
+                password => unicode:characters_to_binary(Password),
                 device_id => <<"MTXER">>},
-    ?LOG_INFO("Logging into '~s'.", [mtxer_user:username(User)]),
+    ?LOG_INFO("Logging into '~s'.", [Username]),
     #{<<"access_token">> := Token} = mtxer_api_common:post("/_matrix/client/r0/login", [], Payload),
-    mtxer_user:set_access_token(User, erlang:binary_to_list(Token)).
+    erlang:binary_to_list(Token).
 
-logout(User) ->
-    ?LOG_INFO("Logging out '~s'.", [mtxer_user:username(User)]),
+logout(Token) ->
+    ?LOG_INFO("Logging out.", [Token]),
     mtxer_api_common:post(
       "/_matrix/client/r0/logout",
-      [mtxer_api_common:authorization(User)],
+      [mtxer_api_common:authorization(Token)],
       nil).
 
 %%%%% Private %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Calculate MAC for registration authorization token header.
-calculate_mac(User, Nonce) ->
-    EncUsername = unicode:characters_to_binary(mtxer_user:username(User), utf8),
-    EncPassword = unicode:characters_to_binary(mtxer_user:password(User), utf8),
+calculate_mac(Username, Password, Nonce) ->
+    EncUsername = unicode:characters_to_binary(Username, utf8),
+    EncPassword = unicode:characters_to_binary(Password, utf8),
     Data = <<Nonce/binary, <<0>>/binary,
              EncUsername/binary, <<0>>/binary,
              EncPassword/binary, <<0>>/binary,

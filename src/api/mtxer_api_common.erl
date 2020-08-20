@@ -6,12 +6,12 @@
          get/2,
          post/3]).
 
--spec authorization(User) -> Header when
-      User :: mtxer_user:user(),
+-spec authorization(Token) -> Header when
+      Token :: nonempty_string(),
       Header :: {string(), string()}.
 
-authorization(User) ->
-    {"Authorization", "Bearer " ++ mtxer_user:access_token(User)}.
+authorization(Token) ->
+    {"Authorization", "Bearer " ++ Token}.
 
 -spec get(Path, Headers) -> Body when
       Path :: nonempty_string(),
@@ -48,7 +48,7 @@ post(Path, Headers, Content) ->
 
 % Build URL.
 homeserver() ->
-    {ok, HomeserverUrl} = application:get_env(url),
+    {ok, HomeserverUrl} = application:get_env(homeserver),
     HomeserverUrl.
 
 url(Path) -> homeserver() ++ Path.
