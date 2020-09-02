@@ -62,3 +62,13 @@ id_of(Alias) ->
 servers_of(Alias) ->
     #{<<"servers">> := Servers} = resolve(Alias),
     Servers.
+
+send_text(Token, RoomId, Message, TxId) ->
+    Url = "_matrix/client/r0/rooms/"
+        ++ RoomId
+        ++ "/send/m.room/message/"
+        ++ erlang:integer_to_list(TxId),
+    Headers = [mtxer_api_common:authorization(Token)],
+    Content = #{<<"body">> => erlang:list_to_binary(Message),
+                <<"msgtype">> => <<"m.text">>},
+    mtxer_api_common:put(Url, Headers, Content).

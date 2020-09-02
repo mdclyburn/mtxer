@@ -20,6 +20,9 @@ users() -> gen_server:call(?MODULE, users).
 
 membership(Username) -> gen_server:call(?MODULE, {membership, Username}).
 
+message(Username, RoomAlias, Message) ->
+    gen_server:call(?MODULE, {message, Username, RoomAlias, Message}).
+
 %%%%% gen_server %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 start_link(Accounts) ->
@@ -44,6 +47,20 @@ handle_call({membership, Username}, _From, State)->
        Username,
        fun (User) -> mtxer_user:membership(User) end),
      State};
+%% handle_call({message, Username, RoomAlias, Message}, _From, State) ->
+%%     RoomId = mtxer_api_room:resolve(RoomAlias),
+%%     {Result, UserNext} =
+%%         with_user(
+%%           State#state.users,
+%%           Username,
+%%           fun (User) ->
+%%                   mtxer_user:with_transaction(
+%%                     User,
+%%                     fun (Token, TxId) ->
+%%                             mtxer_api_room:send_text(Token, RoomId, Message, TxId)
+%%                     end)
+%%           end)
+
 handle_call(_Request, _From, State) ->
     {reply, nil, State}.
 

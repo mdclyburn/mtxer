@@ -4,7 +4,8 @@
 
 -export([authorization/1,
          get/2,
-         post/3]).
+         post/3,
+         put/3]).
 
 -spec authorization(Token) -> Header when
       Token :: nonempty_string(),
@@ -35,6 +36,19 @@ post(Path, Headers, Content) ->
     {ok, {ResponseInfo, _ResponseHeaders, ResponseContent}} =
         httpc:request(
           post,
+          {url(Path), Headers, "application/json", jsone:encode(Content)},
+          [],
+          [{body_format, binary}]),
+    case ResponseInfo of
+        {_Http, 200, _Status} -> jsone:decode(ResponseContent);
+        {_Http, 203, _Status} -> ok;
+        {_Method, StatusCode, _Status} -> {error, StatusCode, jsone:decode(ResponseContent)}
+    end.
+
+put(Path, Headers, Content) ->
+    {ok, {ResponseInfo, _ResponseHeaders, ResponseContent}} =
+        httpc:request(
+          put,
           {url(Path), Headers, "application/json", jsone:encode(Content)},
           [],
           [{body_format, binary}]),

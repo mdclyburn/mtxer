@@ -3,10 +3,10 @@
 -export([login/2,
          logout/1,
          username/1,
-         access_token/1,
          membership/1,
          is_member/2,
-         get_transaction_id/1]).
+         with_token/2,
+         with_transaction/2]).
 
 -record(user, {username = "" :: string(),
                access_token = "" :: string(),
@@ -40,12 +40,6 @@ logout(User) ->
 
 username(User) -> User#user.username.
 
--spec access_token(User) -> Token when
-      User :: user(),
-      Token :: nonempty_string().
-
-access_token(User) -> User#user.access_token.
-
 -spec membership(User) -> RoomList when
       User :: user(),
       RoomList :: [string()].
@@ -59,10 +53,13 @@ membership(User) -> mtxer_api_room:joined(User#user.access_token).
 
 is_member(User, Room) -> lists:member(Room, membership(User)).
 
--spec get_transaction_id(User1) -> User2 when
-      User1 :: user(),
-      User2 :: user().
+with_token(User, Action) ->
+    Action(User#user.access_token).
 
-get_transaction_id(User) ->
-    {User#user.tx_id,
-     User#user{tx_id = User#user.tx_id + 1}}.
+with_transaction(User, Action) ->
+    {Action(User#user.access_token, User#user.access_token),
+     update_tx_id(User)}.
+
+%%%%% Private %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+update_tx_id(User) -> User#user{tx_id = User#user.tx_id + 1}.
